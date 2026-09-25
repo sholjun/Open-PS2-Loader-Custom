@@ -30,6 +30,13 @@ jobs:
         make all 2>&1 | tee compile_output.log || (echo "=== COMPILE FAILURE LOG ==="; tail -n 80 compile_output.log; exit 1)
         ls -la *.elf *.ELF 2>/dev/null || true
 
+    - name: Upload compile log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: compile_log
+        path: compile_output.log
+
     - name: Upload release artifact ELF
       uses: actions/upload-artifact@v4
       with:

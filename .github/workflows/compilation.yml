@@ -32,6 +32,8 @@ jobs:
         cp /usr/local/ps2dev/ps2sdk/bin/bin2s /usr/bin/bin2s || true
 
     - name: Compile OPL ELF
+      env:
+        IOP_CFLAGS: "-std=gnu99 -Wno-incompatible-pointer-types -Wno-error -Wno-implicit-function-declaration"
       run: |
         make clean || true
         set -o pipefail

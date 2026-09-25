@@ -9,8 +9,23 @@ IRX_ID(MODNAME, 1, 1);
 unsigned int ioprpimg = 0xDEC1DEC1;
 int ioprpsiz = 0xDEC2DEC2;
 
-int dummy_fs()
+static int dummy_dev(iop_device_t *d)
 {
+    (void)d;
+    return 0;
+}
+
+static int dummy_open(iop_file_t *f, const char *name, int flags)
+{
+    (void)f;
+    (void)name;
+    (void)flags;
+    return 0;
+}
+
+static int dummy_close(iop_file_t *f)
+{
+    (void)f;
     return 0;
 }
 
@@ -52,11 +67,11 @@ typedef struct _iop_device_ops_tm
 
 iop_device_ops_t my_device_ops =
     {
-        dummy_fs, // init
-        dummy_fs, // deinit
-        NULL,     // dummy_fs,//format
-        dummy_fs, // open_fs,//open
-        dummy_fs, // close_fs,//close
+        dummy_dev,   // init
+        dummy_dev,   // deinit
+        NULL,        // dummy_fs,//format
+        dummy_open,  // open_fs,//open
+        dummy_close, // close_fs,//close
         read_fs,  // read
         NULL,     // dummy_fs,//write
         lseek_fs, // lseek

@@ -1,7 +1,8 @@
-BIN2C = $(PS2SDK)/bin/bin2c
-BIN2S = $(PS2SDK)/bin/bin2s
-BIN2O = $(PS2SDK)/bin/bin2o
+BIN2C ?= $(PS2SDK)/bin/bin2c
+BIN2S ?= $(PS2SDK)/bin/bin2s
+BIN2O ?= $(PS2SDK)/bin/bin2o
 IOP_SRC_DIR = ./
+IOP_CFLAGS += -std=gnu99 -Wno-incompatible-pointer-types -Wno-error -Wno-implicit-function-declaration
 
 all: $(IOP_BIN)
 

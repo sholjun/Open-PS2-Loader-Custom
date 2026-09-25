@@ -357,7 +357,13 @@ static int scanForISO(char *path, char type, struct game_list_t **glist)
                 game->parts = 1;
                 game->media = type;
                 game->format = format;
-                game->sizeMB = dirent->d_stat.st_size >> 20;
+                iox_stat_t fiostat;
+                snprintf(fullpath, sizeof(fullpath), "%s/%s", path, dirent->d_name);
+                if (fileXioGetStat(fullpath, &fiostat) >= 0) {
+                    game->sizeMB = fiostat.size >> 20;
+                } else {
+                    game->sizeMB = 0;
+                }
 
                 count++;
             }

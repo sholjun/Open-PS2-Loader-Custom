@@ -23,13 +23,21 @@ jobs:
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
         git fetch --prune --unshallow || true
 
-    - name: Build bin2s utility
+    - name: Setup build tools and wrappers
       run: |
         mkdir -p /usr/local/ps2dev/ps2sdk/bin
         gcc -O2 pc/bin2s.c -o /usr/local/ps2dev/ps2sdk/bin/bin2s
         chmod +x /usr/local/ps2dev/ps2sdk/bin/bin2s
         cp /usr/local/ps2dev/ps2sdk/bin/bin2s /usr/local/bin/bin2s || true
         cp /usr/local/ps2dev/ps2sdk/bin/bin2s /usr/bin/bin2s || true
+        for P in $(which -a iopfixup 2>/dev/null || which iopfixup); do
+          if [ -f "$P" ] && [ ! -f "${P}.orig" ]; then
+            echo "Wrapping $P with --allow-zero-text"
+            mv "$P" "${P}.orig"
+            printf '#!/bin/sh\nfor a in "$@"; do [ "$a" = "--allow-zero-text" ] && exec "%s.orig" "$@"; done\nexec "%s.orig" --allow-zero-text "$@"\n' "$P" "$P" > "$P"
+            chmod +x "$P"
+          fi
+        done
 
     - name: Compile OPL ELF
       env:

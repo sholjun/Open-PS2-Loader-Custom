@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apk add build-base git zip gawk python3 py3-pip py3-yaml bash
+        apk add build-base git zip gawk bash
 
     - name: git checkout
       uses: actions/checkout@v4
@@ -23,17 +23,13 @@ jobs:
         git config --global --add safe.directory "$GITHUB_WORKSPACE"
         git fetch --prune --unshallow || true
 
-    - name: Install Python packages
-      run: |
-        pip3 install --break-system-packages -r requirements.txt || pip3 install -r requirements.txt || true
-
     - name: Compile OPL ELF
       run: |
         make clean || true
-        make languages || true
-        make all || make release || make opl.elf
+        make all
 
     - name: Upload release artifact ELF
+      if: ${{ success() }}
       uses: actions/upload-artifact@v4
       with:
         name: OPNPS2LD

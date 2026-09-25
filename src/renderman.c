@@ -132,8 +132,9 @@ void rmEndFrame(void)
     gsKit_TexManager_nextFrame(gsGlobal);
 }
 
-static int rmOnVSync(void)
+static int rmOnVSync(int vsync_flag)
 {
+    (void)vsync_flag;
     if (guiWakeupCount == 0) {
         guiWakeupCount = 1;
         iWakeupThread(guiThreadID);

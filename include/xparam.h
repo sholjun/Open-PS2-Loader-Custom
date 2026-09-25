@@ -7,8 +7,6 @@
 */
 
 
-#define GM_IOP_TYPE (0x80000000)
-
 #define PARAM_MDEC_DELAY_CYCLE         (0x00)
 #define PARAM_SPU_INT_DELAY_LIMIT      (0x01)
 #define PARAM_SPU_INT_DELAY_PPC_COEFF  (0x02)
@@ -27,8 +25,6 @@
 #define PARAM_SIO0_DSR_SCK_DELAY_M     (0x0F)
 #define PARAM_MIPS_DCACHE_ON           (0x10)
 #define PARAM_CACHE_FLASH_CHANNELS     (0x11)
-
-#define GM_IF ((vu32 *)0x1F801450)
 
 void ResetDeckardXParams();
 void ApplyDeckardXParam(const char *title);

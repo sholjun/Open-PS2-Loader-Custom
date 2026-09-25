@@ -79,6 +79,9 @@ static void bdmEventHandler(void *packet, void *opt)
 
 static void bdmLoadBlockDeviceModules(void)
 {
+    if (bdmLoadModuleLock <= 0)
+        bdmInitSemaphore();
+
     WaitSema(bdmLoadModuleLock);
 
     if (gEnableILK && !iLinkModLoaded) {
@@ -107,6 +110,9 @@ static void bdmLoadBlockDeviceModules(void)
 
 void bdmLoadModules(void)
 {
+    if (bdmLoadModuleLock <= 0)
+        bdmInitSemaphore();
+
     LOG("BDMSUPPORT LoadModules\n");
 
     // Load Block Device Manager (BDM)
@@ -726,6 +732,9 @@ void bdmInitDevicesData()
 
 void bdmInitSemaphore()
 {
+    if (bdmLoadModuleLock > 0)
+        return;
+
     // Create a semaphore so only one thread can load IOP modules at a time.
     ee_sema_t semaphore;
     semaphore.init_count = 1;

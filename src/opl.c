@@ -1987,7 +1987,6 @@ int main(int argc, char *argv[])
 
     // reset, load modules
     reset();
-    ResetDeckardXParams();
 
     if (argc >= 5) {
         /* argv[0] boot path

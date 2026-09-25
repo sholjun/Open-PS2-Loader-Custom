@@ -118,16 +118,8 @@ void ResetDeckardXParams()
 {
     /*
     This is needed in the case of IGR because the previous game might have changed XPARAMS and the new game might need the default one.
+    Only Deckard PS2 consoles (SCPH-75000+) and PS3/PS4 have rom0:XPARAM / rom0:XPARAM2.
     */
-
-    /*
-    Check to see if this is a DECKARD machine or not.
-    Bit 31 of GM_IF is for the IOP type.
-    0 Regular IOP
-    1 DECKARD IOP
-    */
-    if ((*GM_IF & GM_IOP_TYPE) == 0)
-        return;
 
     int fd;
     char params[30];
@@ -193,14 +185,6 @@ void ApplyDeckardXParam(const char *title)
     strncpy(params, title, 11);
     params[11] = 0; // Terminate param string.
 
-    /*
-    Check to see if this is a DECKARD machine or not.
-    Bit 31 of GM_IF is for the IOP type.
-    0 Regular IOP
-    1 DECKARD IOP
-    */
-    if ((*GM_IF & GM_IOP_TYPE) == 0)
-        return;
 
     /*
     See if this PS3/4 emu and apply the config to it.

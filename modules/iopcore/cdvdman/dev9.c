@@ -656,3 +656,35 @@ static int expbay_init(void)
     M_PRINTF("CXD9611 (Expansion Bay type) initialized.\n");
     return 0;
 }
+
+/* Compatibility wrappers for modern PS2SDK dev9/spd API */
+void SpdIntrEnable(int mask)
+{
+    dev9IntrEnable(mask);
+}
+
+void SpdIntrDisable(int mask)
+{
+    dev9IntrDisable(mask);
+}
+
+int SpdDmaTransfer(int ctrl, void *buf, int bcr, int dir)
+{
+    return dev9DmaTransfer(ctrl, buf, bcr, dir);
+}
+
+void SpdSetLED(int ctl)
+{
+    dev9LEDCtl(ctl);
+}
+
+void SpdRegisterIntrHandler(int intr, dev9_intr_cb_t cb)
+{
+    dev9RegisterIntrCb(intr, cb);
+}
+
+int Dev9RegisterPowerOffHandler(int idx, dev9_shutdown_cb_t cb)
+{
+    return dev9RegisterShutdownCb(idx, cb);
+}
+

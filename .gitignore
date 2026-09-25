@@ -17,7 +17,7 @@
 *.o
 *.patch
 *.rej
-*.s
+asm/
 *.zip
 *.ZIP
 *.a
@@ -33,6 +33,11 @@ DETAILED_CHANGELOG
 !.editorconfig
 !.clang-format
 !.clang-format-ignore
+!*.S
+!*/*.S
+!*/*/*.S
+!*/*/*/*.S
+!*/*/*/*/*.S
 !modules/debug/*.irx
 
 #

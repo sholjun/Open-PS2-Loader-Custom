@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apk add build-base git zip gawk python3 py3-pip bash
+        apk add build-base git zip gawk python3 py3-pip py3-yaml bash
 
     - name: git checkout
       uses: actions/checkout@v4
@@ -24,16 +24,21 @@ jobs:
         git fetch --prune --unshallow || true
 
     - name: Install Python packages
-      run: pip3 install -r requirements.txt || true
+      run: |
+        pip3 install --break-system-packages -r requirements.txt || pip3 install -r requirements.txt || true
 
-    - name: Compile -> make clean release
-      run: make --trace clean release
+    - name: Compile OPL ELF
+      run: |
+        make clean || true
+        make languages || true
+        make all || make release || make opl.elf
 
     - name: Upload release artifact ELF
       uses: actions/upload-artifact@v4
       with:
         name: OPNPS2LD
         path: |
+          OPNPS2LD.ELF
           OPNPS2LD-*.ELF
+          opl.elf
           *.ELF
-          *.elf

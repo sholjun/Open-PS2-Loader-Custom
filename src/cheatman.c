@@ -356,6 +356,19 @@ int load_cheats(const char *cheatfile)
         return 0;
 }
 
+static int contains_ignore_case(const char *haystack, const char *needle)
+{
+    if (!haystack || !needle)
+        return 0;
+    size_t nlen = strlen(needle);
+    while (*haystack) {
+        if (strncasecmp(haystack, needle, nlen) == 0)
+            return 1;
+        haystack++;
+    }
+    return 0;
+}
+
 int ParseCheatFileItems(const char *cheatfile, cheat_file_t *out_cheats)
 {
     char *buf = NULL;
@@ -398,7 +411,7 @@ int ParseCheatFileItems(const char *cheatfile, cheat_file_t *out_cheats)
                     strncpy(out_cheats->items[idx].name, name, MAX_CHEAT_NAME_LEN - 1);
                     out_cheats->items[idx].name[MAX_CHEAT_NAME_LEN - 1] = NUL;
                     out_cheats->items[idx].enabled = 0;
-                    out_cheats->items[idx].is_mastercode = (strcasestr(name, "master") != NULL);
+                    out_cheats->items[idx].is_mastercode = contains_ignore_case(name, "master");
                     out_cheats->count++;
                 }
             }
@@ -417,7 +430,7 @@ int ParseCheatFileItems(const char *cheatfile, cheat_file_t *out_cheats)
                     strncpy(out_cheats->items[idx].name, line, MAX_CHEAT_NAME_LEN - 1);
                     out_cheats->items[idx].name[MAX_CHEAT_NAME_LEN - 1] = NUL;
                     out_cheats->items[idx].enabled = 1;
-                    out_cheats->items[idx].is_mastercode = (strcasestr(line, "master") != NULL);
+                    out_cheats->items[idx].is_mastercode = contains_ignore_case(line, "master");
                     out_cheats->count++;
                 }
             }

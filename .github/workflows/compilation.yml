@@ -26,7 +26,7 @@ jobs:
     - name: Compile OPL ELF
       run: |
         make clean || true
-        make all
+        make all 2>&1 | tee compile_output.log
 
     - name: Upload release artifact ELF
       if: ${{ success() }}
@@ -38,3 +38,10 @@ jobs:
           OPNPS2LD-*.ELF
           opl.elf
           *.ELF
+
+    - name: Upload compile log on failure
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: COMPILE_LOG
+        path: compile_output.log

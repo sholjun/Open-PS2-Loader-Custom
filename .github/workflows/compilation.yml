@@ -26,7 +26,8 @@ jobs:
     - name: Compile OPL ELF
       run: |
         make clean || true
-        make all 2>&1 | tee compile_output.log
+        set -o pipefail
+        make all 2>&1 | tee compile_output.log || (echo "=== COMPILE FAILURE LOG ==="; tail -n 80 compile_output.log; exit 1)
         ls -la *.elf *.ELF 2>/dev/null || true
 
     - name: Upload release artifact ELF
@@ -40,10 +41,3 @@ jobs:
           opl_stripped.elf
           *.ELF
           *.elf
-
-    - name: Upload compile log
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: COMPILE_LOG
-        path: compile_output.log

@@ -27,9 +27,9 @@ jobs:
       run: |
         make clean || true
         make all 2>&1 | tee compile_output.log
+        ls -la *.elf *.ELF 2>/dev/null || true
 
     - name: Upload release artifact ELF
-      if: ${{ success() }}
       uses: actions/upload-artifact@v4
       with:
         name: OPNPS2LD
@@ -37,10 +37,12 @@ jobs:
           OPNPS2LD.ELF
           OPNPS2LD-*.ELF
           opl.elf
+          opl_stripped.elf
           *.ELF
+          *.elf
 
-    - name: Upload compile log on failure
-      if: ${{ failure() }}
+    - name: Upload compile log
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: COMPILE_LOG

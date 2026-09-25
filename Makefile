@@ -224,14 +224,7 @@ EE_DEPS = $($(filter %.o,$(EE_OBJS)):%.o=%.d)
 
 ifdef PS2SDK
 
-all:
-	echo "Building Open PS2 Loader $(OPL_VERSION)..."
-	echo "-Interface"
-ifneq ($(NOT_PACKED),1)
-	$(MAKE) $(EE_BIN_PACKED)
-else
-	$(MAKE) $(EE_BIN)
-endif
+all: $(EE_BIN_PACKED)
 
 release: all $(EE_VPKD).ZIP
 

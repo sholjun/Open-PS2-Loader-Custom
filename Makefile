@@ -396,14 +396,19 @@ $(EE_ASM_DIR)usb_pademu.s: $(PREBUILT_DIR)usb_pademu.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)bdm.s: $(PREBUILT_DIR)bdm.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdm_irx
 
-$(EE_ASM_DIR)bdmfs_fatfs.s: $(PREBUILT_DIR)bdmfs_fatfs.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)bdmfs_fatfs.s: $(PS2SDK)/iop/irx/bdmfs_fatfs.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdmfs_fatfs_irx
 
 $(EE_ASM_DIR)iLinkman.s: $(PREBUILT_DIR)iLinkman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ iLinkman_irx
 
-$(EE_ASM_DIR)usbmass_bd.s: $(PREBUILT_DIR)usbmass_bd.irx | $(EE_ASM_DIR)
+ifeq ($(DEBUG),1)
+$(EE_ASM_DIR)usbmass_bd.s: $(PS2SDK)/iop/irx/usbmass_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ usbmass_bd_irx
+else
+$(EE_ASM_DIR)usbmass_bd.s: $(PS2SDK)/iop/irx/usbmass_bd_mini.irx | $(EE_ASM_DIR)
+	$(BIN2S) $< $@ usbmass_bd_irx
+endif
 
 $(EE_ASM_DIR)IEEE1394_bd.s: $(PREBUILT_DIR)IEEE1394_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ IEEE1394_bd_irx

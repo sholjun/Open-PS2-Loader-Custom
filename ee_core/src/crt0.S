@@ -28,9 +28,6 @@
    .text
    .align   2
 
-   nop
-   nop
-
    .globl  _start
    .ent    _start
 _start:

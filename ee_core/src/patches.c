@@ -47,8 +47,6 @@ typedef struct
 #define PATCH_PRO_SNOWBOARDER    0x01020199
 #define PATCH_SHADOW_MAN_2       0x01020413
 #define PATCH_HARVEST_MOON_AWL   0xFF025421
-#define PATCH_MTV_PMR_V200_ADDR  0x001F3AB8 // MTV Pimp My Ride v2.00 patch address
-#define PATCH_SRS_V200_ADDR      0x0033B744 // SRS Stree Racing Syndicate v2.00 patch address
 
 static const patchlist_t patch_list[] = {
     {"SLES_524.58", BDM_MODE, {PATCH_GENERIC_NIS, 0x00000000, 0x00000000}},        // Disgaea Hour of Darkness PAL - disable cdvd timeout stuff
@@ -134,8 +132,7 @@ static const patchlist_t patch_list[] = {
     {"SLPS_732.22", ALL_MODE, {PATCH_HARVEST_MOON_AWL, 0x00000000, 0x00000000}},   // Harvest Moon: A Wonderful Life (NTSC-J) (PlayStation 2 The Best)
     {"SLUS_211.71", ALL_MODE, {PATCH_HARVEST_MOON_AWL, 0x00000001, 0x00000000}},   // Harvest Moon: A Wonderful Life (NTSC-U/C)
     {"SLES_534.80", ALL_MODE, {PATCH_HARVEST_MOON_AWL, 0x00000002, 0x00000000}},   // Harvest Moon: A Wonderful Life (NTSC-PAL)
-    {"SLPS_254.78", ALL_MODE, {0x00365BC0, 0x1040FFFD, 0x1440FFFD}},               // Kidou Senshi Gundam Ichinen Sensou sceSifSyncIop() != 0 to == 0 return check fix.
-    {NULL, 0, {0x00000000, 0x00000000, 0x00000000}}                                // terminator
+    {NULL, 0, {0x00000000, 0x00000000, 0x00000000}}                                // terminater
 };
 
 #define JAL(addr)      (0x0c000000 | (((addr)&0x03ffffff) >> 2))
@@ -143,7 +140,7 @@ static const patchlist_t patch_list[] = {
 #define FNADDR(jal)    (((jal)&0x03ffffff) << 2)
 #define NIBBLE2CHAR(n) ((n) <= 9 ? '0' + (n) : 'a' + (n))
 
-static int (*cdReadPtr)(u32 lsn, u32 nsectors, void *buf, int *mode);
+static int (*cdRead)(u32 lsn, u32 nsectors, void *buf, int *mode);
 static unsigned int g_delay_cycles;
 static int g_mode; // Patch may use this for anything.
 
@@ -218,7 +215,7 @@ static int delayed_cdRead(u32 lsn, u32 nsectors, void *buf, int *mode)
     int r;
     unsigned int count;
 
-    r = cdReadPtr(lsn, nsectors, buf, mode);
+    r = cdRead(lsn, nsectors, buf, mode);
     count = g_delay_cycles;
     while (count--)
         asm("nop\nnop\nnop\nnop");
@@ -231,8 +228,8 @@ static void generic_delayed_cdRead_patches(u32 patch_addr, u32 delay_cycles)
     // set configureable delay cycles
     g_delay_cycles = delay_cycles;
 
-    // get original cdReadPtr() pointer
-    cdReadPtr = (void *)FNADDR(_lw(patch_addr));
+    // get original cdRead() pointer
+    cdRead = (void *)FNADDR(_lw(patch_addr));
 
     // overwrite with a JAL to our delayed_cdRead function
     _sw(JAL((u32)delayed_cdRead), patch_addr);
@@ -692,47 +689,9 @@ static void UltProPinballPatch(const char *path)
 }
 
 static void EutechnyxWakeupTIDPatch(u32 addr)
-{
-    // Eutechnyx games have the main thread ID hardcoded for a call to WakeupThread().
+{ // Eutechnyx games have the main thread ID hardcoded for a call to WakeupThread().
     // addiu $a0, $zero, 1
     // This breaks when the thread IDs change after IGR is used.
-
-    /*
-    MTV Pimp My Ride uses same serial for v1.00 and v2.00 of USA release.
-    We need to tell which offsets to use.
-    */
-    if (_strcmp(GameID, "SLUS_215.80") == 0) {
-        // Check version v1.00 by default.
-        if (*(vu16 *)addr == 1) {
-            *(vu16 *)addr = (u16)GetThreadId();
-            return;
-        }
-
-        // Now check if v2.00.
-        if (*(vu16 *)(PATCH_MTV_PMR_V200_ADDR) == 1) {
-            *(vu16 *)(PATCH_MTV_PMR_V200_ADDR) = (u16)GetThreadId();
-        }
-        return;
-    }
-
-    /*
-    Same problem with SRS: Street Racing Syndicate
-    The patch already exists but it was for v1.03 of the game so if it was trying to boot v2.00 then it would be wrong patched. This handles both cases correctly.
-    */
-    if (_strcmp(GameID, "SLUS_205.82") == 0) {
-        // Check version v1.03 by default.
-        if (*(vu16 *)addr == 1) {
-            *(vu16 *)addr = (u16)GetThreadId();
-            return;
-        }
-
-        // Now check if v2.00.
-        if (*(vu16 *)(PATCH_SRS_V200_ADDR) == 1) {
-            *(vu16 *)(PATCH_SRS_V200_ADDR) = (u16)GetThreadId();
-        }
-        return;
-    }
-
     *(vu16 *)addr = (u16)GetThreadId();
 }
 
@@ -887,10 +846,6 @@ void apply_patches(const char *path)
 {
     const patchlist_t *p;
     int mode;
-    // Some patches hack into specific ELF files
-    // make sure the filename and gameid match for those patches
-    // This prevents games with multiple ELF's from being corrupted by the patch
-    int file_eq_gameid = !_strncmp(&path[8], GameID, 11); // starting after 'cdrom0:\'
 
     if ((GameMode == HDD_MODE) || (GameMode == ETH_MODE))
         mode = GameMode;
@@ -908,28 +863,22 @@ void apply_patches(const char *path)
                     AC9B_generic_patches();
                     break;
                 case PATCH_GENERIC_SLOW_READS:
-                    if (file_eq_gameid)
-                        generic_delayed_cdRead_patches(p->patch.check, p->patch.val); // slow reads generic patch
+                    generic_delayed_cdRead_patches(p->patch.check, p->patch.val); // slow reads generic patch
                     break;
                 case PATCH_SDF_MACROSS:
-                    if (file_eq_gameid)
-                        SDF_Macross_patch();
+                    SDF_Macross_patch();
                     break;
                 case PATCH_GENERIC_CAPCOM:
-                    if (file_eq_gameid)
-                        generic_capcom_protection_patches(p->patch.val); // Capcom anti cdvd emulator protection patch
+                    generic_capcom_protection_patches(p->patch.val); // Capcom anti cdvd emulator protection patch
                     break;
                 case PATCH_SRW_IMPACT:
-                    if (file_eq_gameid)
-                        SRWI_IMPACT_patches();
+                    SRWI_IMPACT_patches();
                     break;
                 case PATCH_RNC_UYA:
-                    if (file_eq_gameid)
-                        RnC3_UYA_patches((unsigned int *)p->patch.val);
+                    RnC3_UYA_patches((unsigned int *)p->patch.val);
                     break;
                 case PATCH_ZOMBIE_ZONE:
-                    if (file_eq_gameid)
-                        ZombieZone_patches(p->patch.val);
+                    ZombieZone_patches(p->patch.val);
                     break;
                 case PATCH_DOT_HACK:
                     DotHack_patches(path);
@@ -938,15 +887,13 @@ void apply_patches(const char *path)
                     SOSPatch(p->patch.val);
                     break;
                 case PATCH_VIRTUA_QUEST:
-                    if (file_eq_gameid)
-                        VirtuaQuest_patches();
+                    VirtuaQuest_patches();
                     break;
                 case PATCH_ULT_PRO_PINBALL:
                     UltProPinballPatch(path);
                     break;
                 case PATCH_EUTECHNYX_WU_TID:
-                    if (file_eq_gameid)
-                        EutechnyxWakeupTIDPatch(p->patch.val);
+                    EutechnyxWakeupTIDPatch(p->patch.val);
                     break;
                 case PATCH_PRO_SNOWBOARDER:
                     ProSnowboarderPatch();
@@ -958,11 +905,8 @@ void apply_patches(const char *path)
                     HarvestMoonAWLPatch(p->patch.val);
                     break;
                 default: // Single-value patches
-                    if (file_eq_gameid) {
-                        if (_lw(p->patch.addr) == p->patch.check)
-                            _sw(p->patch.val, p->patch.addr);
-                    }
-                    break;
+                    if (_lw(p->patch.addr) == p->patch.check)
+                        _sw(p->patch.val, p->patch.addr);
             }
         }
     }

@@ -33,7 +33,6 @@
 
 #include "include/cheatman.h"
 #include "include/sound.h"
-#include "include/xparam.h"
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.

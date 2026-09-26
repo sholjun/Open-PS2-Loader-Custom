@@ -47,6 +47,9 @@ void (*Old_GetOsdConfigParam)(ConfigParam *config);
 /*----------------------------------------------------------------------------------------*/
 u32 New_SifSetDma(SifDmaTransfer_t *sdd, s32 len)
 {
+    if (EnableDebug)
+        GS_BGCOLOUR = 0x800080; // Dark Purple (Game initiated IOP reset)
+
     // Hook padOpen function to install In Game Reset
     if (!(g_compat_mask & COMPAT_MODE_6) && padOpen_hooked == 0) {
         Install_IGR();
@@ -106,11 +109,17 @@ void sysLoadElf(char *filename, int argc, char **argv)
     r = LoadElf(filename, &elf);
 
     if (!r) {
+        if (EnableDebug)
+            GS_BGCOLOUR = 0x00ffff; // Cyan: LoadElf succeeded
+
         DPRINTF(" done\n");
 
         DPRINTF("t_loadElf: trying to apply patches...\n");
         // applying needed patches
         apply_patches(filename);
+
+        if (EnableDebug)
+            GS_BGCOLOUR = 0xff00ff; // Magenta: Patches applied
 
         FlushCache(0);
         FlushCache(2);
@@ -122,6 +131,9 @@ void sysLoadElf(char *filename, int argc, char **argv)
         SifExitRpc();
 
         disable_padOpen_hook = 0;
+
+        if (EnableDebug)
+            GS_BGCOLOUR = 0x0080ff; // Orange: Entering CleanExecPS2
 
         DPRINTF("t_loadElf: executing...\n");
         CleanExecPS2((void *)elf.epc, (void *)elf.gp, argc, argv);

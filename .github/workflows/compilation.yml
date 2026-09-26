@@ -74,10 +74,15 @@ jobs:
                 if p_vaddr + p_memsz > 0x00097000:
                     print(f'ERROR: PT_LOAD end (0x{p_vaddr+p_memsz:08x}) exceeds 0x00097000!')
                     sys.exit(1)
+                stack_size = 0x00097000 - (p_vaddr + p_memsz)
+                print(f'  ==> Available ee_core stack space: {stack_size} bytes (0x{stack_size:x})')
+                if stack_size < 32768:
+                    print(f'ERROR: Available ee_core stack ({stack_size} bytes) is less than 32KB minimum!')
+                    sys.exit(1)
         if not found_load:
             print('ERROR: No PT_LOAD found!')
             sys.exit(1)
-        print('SUCCESS: ee_core layout is valid!')
+        print('SUCCESS: ee_core layout and stack size are valid!')
         " 2>&1 | tee -a compile_output.log
 
     - name: Upload compile log

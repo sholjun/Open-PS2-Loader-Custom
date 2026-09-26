@@ -441,6 +441,12 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
 
         // Get fragment list
         int iFragCount = fileXioIoctl2(fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
+        if (iFragCount <= 0) {
+            close(fd);
+            sbUnprepare(&settings->common);
+            guiMsgBox("Error: Failed to get fragments for ISO file! Check USB format.", 0, NULL);
+            return;
+        }
         if (iFragCount > BDM_MAX_FRAGS) {
             // Too many fragments
             close(fd);

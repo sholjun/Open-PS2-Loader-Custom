@@ -441,26 +441,23 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
 
         // Get fragment list
         int iFragCount = fileXioIoctl2(fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
-        if (iFragCount <= 0 || iFragCount > BDM_MAX_FRAGS) {
-            // Error or too many fragments
+        if (iFragCount > BDM_MAX_FRAGS) {
+            // Too many fragments
             close(fd);
             sbUnprepare(&settings->common);
             guiMsgBox(_l(_STR_ERR_FRAGMENTED), 0, NULL);
             return;
         }
-        iso_frag->frag_count += iFragCount;
-        iTotalFragCount += iFragCount;
+
+        if (iFragCount > 0) {
+            iso_frag->frag_count += iFragCount;
+            iTotalFragCount += iFragCount;
+        }
 
         if ((gPS2Logo) && (i == 0))
             EnablePS2Logo = CheckPS2Logo(fd, 0);
 
         close(fd);
-    }
-
-    if (iso_frag->frag_count == 0) {
-        sbUnprepare(&settings->common);
-        guiMsgBox(_l(_STR_ERR_FRAGMENTED), 0, NULL);
-        return;
     }
 
     // Initialize layer 1 information.
@@ -528,7 +525,7 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
     if (pDeviceData->massDeviceIndex < 0 || pDeviceData->massDeviceIndex >= 5)
         pDeviceData->massDeviceIndex = 0;
     settings->bdDeviceId = pDeviceData->massDeviceIndex;
-    if (!strcmp(pDeviceData->bdmDriver, "usb")) {
+    if (!strcmp(pDeviceData->bdmDriver, "usb") || pDeviceData->bdmDriver[0] == '\0') {
         settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_USBD;
         sysLaunchLoaderElf(filename, "BDM_USB_MODE", irx_size, irx, size_mcemu_irx, bdm_mcemu_irx, EnablePS2Logo, compatmask);
     } else if (!strcmp(pDeviceData->bdmDriver, "sd") && strlen(pDeviceData->bdmDriver) == 2) {

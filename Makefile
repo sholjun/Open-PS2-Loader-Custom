@@ -28,7 +28,7 @@ RTL ?= 0
 IGS ?= 0
 
 #Enables/disables pad emulator
-PADEMU ?= 0
+PADEMU ?= 1
 
 #Enables/disables building of an edition of OPL that will support the DTL-T10000 (SDK v2.3+)
 DTL_T10000 ?= 0
@@ -69,7 +69,7 @@ endif
 
 FRONTEND_OBJS = pad.o fntsys.o renderman.o menusys.o OSDHistory.o system.o lang.o lang_internal.o config.o hdd.o dialogs.o \
 		dia.o ioman.o texcache.o themes.o supportbase.o bdmsupport.o ethsupport.o hddsupport.o zso.o lz4.o \
-		appsupport.o gui.o guigame.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o sound.o ps2cnf.o xparam.o
+		appsupport.o gui.o guigame.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o sound.o ps2cnf.o
 
 IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o bdmevent.o \
 		bdm.o bdmfs_fatfs.o usbmass_bd.o iLinkman.o IEEE1394_bd.o mx4sio_bd.o \
@@ -247,6 +247,9 @@ clean:
 	echo "Cleaning..."
 	echo "-Interface"
 	rm -fr $(MAPFILE) $(EE_BIN) $(EE_BIN_PACKED) $(EE_BIN_STRIPPED) $(EE_VPKD).* $(EE_OBJS_DIR) $(EE_ASM_DIR)
+	echo " -pademu"
+	$(MAKE) -C modules/pademu USE_BT=1 clean
+	$(MAKE) -C modules/pademu USE_USB=1 clean
 	echo "-pc tools"
 	$(MAKE) -C pc clean
 
@@ -387,10 +390,16 @@ modules/ds34usb/ee/libds34usb.a: modules/ds34usb/ee
 $(EE_ASM_DIR)ds34usb.s: $(PREBUILT_DIR)ds34usb.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ds34usb_irx
 
-$(EE_ASM_DIR)bt_pademu.s: $(PREBUILT_DIR)bt_pademu.irx | $(EE_ASM_DIR)
+modules/pademu/bt_pademu.irx: modules/pademu
+	$(MAKE) -C $< USE_BT=1
+
+$(EE_ASM_DIR)bt_pademu.s: modules/pademu/bt_pademu.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bt_pademu_irx
 
-$(EE_ASM_DIR)usb_pademu.s: $(PREBUILT_DIR)usb_pademu.irx | $(EE_ASM_DIR)
+modules/pademu/usb_pademu.irx: modules/pademu
+	$(MAKE) -C $< USE_USB=1
+
+$(EE_ASM_DIR)usb_pademu.s: modules/pademu/usb_pademu.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ usb_pademu_irx
 
 $(EE_ASM_DIR)bdm.s: $(PREBUILT_DIR)bdm.irx | $(EE_ASM_DIR)

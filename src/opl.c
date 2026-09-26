@@ -33,7 +33,6 @@
 
 #include "include/cheatman.h"
 #include "include/sound.h"
-#include "include/xparam.h"
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.
@@ -1987,7 +1986,6 @@ int main(int argc, char *argv[])
 
     // reset, load modules
     reset();
-    ResetDeckardXParams();
 
     if (argc >= 5) {
         /* argv[0] boot path

@@ -64,8 +64,8 @@ int GetCheatsEnabled(void);
 const u32 *GetCheatsList(void);
 int load_cheats(const char *cheatfile);
 
-#define MAX_CHEAT_ITEMS 48
-#define MAX_CHEAT_NAME_LEN 64
+#define MAX_CHEAT_ITEMS 64
+#define MAX_CHEAT_NAME_LEN 128
 
 typedef struct
 {

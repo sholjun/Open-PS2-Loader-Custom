@@ -488,11 +488,11 @@ static void guiGameShowSelectCheatsDialog(int id, item_list_t *support)
     diaItems[idx++] = (struct UIItem){UI_SPLITTER};
 
     for (int i = 0; i < count; ++i) {
-        diaItems[idx++] = (struct UIItem){UI_LABEL, 0, 1, 1, -1, -25, 0, {.label = {cheatFile.items[i].name, -1}}};
+        diaItems[idx++] = (struct UIItem){UI_LABEL, 0, 1, 1, -1, -65, 0, {.label = {cheatFile.items[i].name, -1}}};
         diaItems[idx++] = (struct UIItem){UI_SPACER};
         int is_mc = cheatFile.items[i].is_mastercode;
         int def_val = is_mc ? 1 : cheatFile.items[i].enabled;
-        diaItems[idx++] = (struct UIItem){UI_BOOL, CHT_ITEM_BASE + i, 1, !is_mc, -1, 0, 0, {.intvalue = {def_val, def_val}}};
+        diaItems[idx++] = (struct UIItem){UI_BOOL, CHT_ITEM_BASE + i, 1, 1, -1, 0, 0, {.intvalue = {def_val, def_val}}};
         diaItems[idx++] = (struct UIItem){UI_BREAK};
     }
 

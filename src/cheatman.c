@@ -369,6 +369,76 @@ static int contains_ignore_case(const char *haystack, const char *needle)
     return 0;
 }
 
+static int is_raw_or_commented_code(const char *s, int *is_commented, char *raw_code, int raw_max)
+{
+    char tmp[CHEAT_LINE_MAX + 1];
+    strncpy(tmp, s, CHEAT_LINE_MAX);
+    tmp[CHEAT_LINE_MAX] = NUL;
+    trim_str(tmp);
+
+    int commented = 0;
+    char *p = tmp;
+    if (strncmp(p, "//", 2) == 0) {
+        commented = 1;
+        p += 2;
+        trim_str(p);
+    } else if (*p == '#') {
+        commented = 1;
+        p += 1;
+        trim_str(p);
+    }
+
+    if (is_cheat_code(p)) {
+        if (is_commented)
+            *is_commented = commented;
+        if (raw_code && raw_max > 0) {
+            strncpy(raw_code, p, raw_max - 1);
+            raw_code[raw_max - 1] = NUL;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static void clean_cheat_title(const char *line, char *out_title, int max_len, int *out_is_off)
+{
+    char tmp[CHEAT_LINE_MAX + 1];
+    strncpy(tmp, line, CHEAT_LINE_MAX);
+    tmp[CHEAT_LINE_MAX] = NUL;
+    trim_str(tmp);
+
+    int is_off = 0;
+    char *p = tmp;
+
+    if (strncasecmp(p, "// [OFF]", 8) == 0 || strncasecmp(p, "//[OFF]", 7) == 0) {
+        is_off = 1;
+        p += (p[7] == ' ' ? 8 : 7);
+    } else if (strncasecmp(p, "// [ON]", 7) == 0 || strncasecmp(p, "//[ON]", 6) == 0) {
+        is_off = 0;
+        p += (p[6] == ' ' ? 7 : 6);
+    } else if (strncmp(p, "//", 2) == 0) {
+        p += 2;
+    } else if (*p == '#') {
+        p += 1;
+    }
+
+    trim_str(p);
+    strncpy(out_title, p, max_len - 1);
+    out_title[max_len - 1] = NUL;
+    if (out_is_off)
+        *out_is_off = is_off;
+}
+
+static int has_alpha_or_digit(const char *s)
+{
+    while (*s) {
+        if (isalnum((unsigned char)*s))
+            return 1;
+        s++;
+    }
+    return 0;
+}
+
 int ParseCheatFileItems(const char *cheatfile, cheat_file_t *out_cheats)
 {
     char *buf = NULL;
@@ -382,6 +452,11 @@ int ParseCheatFileItems(const char *cheatfile, cheat_file_t *out_cheats)
     buf = read_text_file(cheatfile, 0);
     if (!buf)
         return -1;
+
+    char candidate_title[MAX_CHEAT_NAME_LEN];
+    candidate_title[0] = NUL;
+    int candidate_is_off = 0;
+    int in_cheat_block = 0;
 
     const char *p = buf;
     while (*p && out_cheats->count < MAX_CHEAT_ITEMS) {
@@ -398,40 +473,37 @@ int ParseCheatFileItems(const char *cheatfile, cheat_file_t *out_cheats)
 
             // Skip game title quotes header e.g. "Game Title /ID ..."
             if (line[0] == '"') {
-                p += len + 1;
-                continue;
-            }
-
-            // Check if this is a disabled cheat title: e.g. "// [OFF] Infinite Health"
-            if (strncmp(line, "// [OFF]", 8) == 0 || strncmp(line, "//[OFF]", 7) == 0) {
-                char *name = line + (line[7] == ' ' ? 8 : 7);
-                trim_str(name);
-                if (strlen(name) > 0) {
-                    int idx = out_cheats->count;
-                    strncpy(out_cheats->items[idx].name, name, MAX_CHEAT_NAME_LEN - 1);
-                    out_cheats->items[idx].name[MAX_CHEAT_NAME_LEN - 1] = NUL;
-                    out_cheats->items[idx].enabled = 0;
-                    out_cheats->items[idx].is_mastercode = contains_ignore_case(name, "master");
-                    out_cheats->count++;
-                }
-            }
-            // Check if this is a raw hex cheat code: "XXXXXXXX YYYYYYYY"
-            else if (is_cheat_code(line)) {
-                // Code line, skip
-            }
-            // Check if general comment
-            else if (is_cmt_str(line)) {
-                // Section comment, skip
-            }
-            // Otherwise, it's an ACTIVE cheat title!
-            else {
-                if (strlen(line) > 1) {
-                    int idx = out_cheats->count;
-                    strncpy(out_cheats->items[idx].name, line, MAX_CHEAT_NAME_LEN - 1);
-                    out_cheats->items[idx].name[MAX_CHEAT_NAME_LEN - 1] = NUL;
-                    out_cheats->items[idx].enabled = 1;
-                    out_cheats->items[idx].is_mastercode = contains_ignore_case(line, "master");
-                    out_cheats->count++;
+                candidate_title[0] = NUL;
+                in_cheat_block = 0;
+            } else {
+                int is_commented = 0;
+                char raw_code[CHEAT_LINE_MAX + 1];
+                if (is_raw_or_commented_code(line, &is_commented, raw_code, sizeof(raw_code))) {
+                    if (candidate_title[0] != NUL) {
+                        int idx = out_cheats->count;
+                        if (idx < MAX_CHEAT_ITEMS) {
+                            strncpy(out_cheats->items[idx].name, candidate_title, MAX_CHEAT_NAME_LEN - 1);
+                            out_cheats->items[idx].name[MAX_CHEAT_NAME_LEN - 1] = NUL;
+                            out_cheats->items[idx].enabled = (!candidate_is_off && !is_commented) ? 1 : 0;
+                            out_cheats->items[idx].is_mastercode = contains_ignore_case(candidate_title, "master");
+                            out_cheats->count++;
+                        }
+                        candidate_title[0] = NUL;
+                        in_cheat_block = 1;
+                    } else if (in_cheat_block) {
+                        if (!is_commented && out_cheats->count > 0)
+                            out_cheats->items[out_cheats->count - 1].enabled = 1;
+                    }
+                } else {
+                    char clean[MAX_CHEAT_NAME_LEN];
+                    int is_off = 0;
+                    clean_cheat_title(line, clean, sizeof(clean), &is_off);
+                    if (has_alpha_or_digit(clean)) {
+                        strncpy(candidate_title, clean, sizeof(candidate_title) - 1);
+                        candidate_title[sizeof(candidate_title) - 1] = NUL;
+                        candidate_is_off = is_off;
+                        in_cheat_block = 0;
+                    }
                 }
             }
         }
@@ -456,7 +528,7 @@ int SaveCheatFileItems(const char *cheatfile, const cheat_file_t *in_cheats)
         return -1;
 
     int orig_size = strlen(buf);
-    int max_out_size = orig_size + 8192;
+    int max_out_size = orig_size + 16384;
     char *out_buf = malloc(max_out_size);
     if (!out_buf) {
         free(buf);
@@ -490,55 +562,46 @@ int SaveCheatFileItems(const char *cheatfile, const cheat_file_t *in_cheats)
         } else if (is_empty_str(trimmed)) {
             out_len += snprintf(out_buf + out_len, max_out_size - out_len, "\n");
         } else {
-            int found_cheat = -1;
-
-            if (strncmp(trimmed, "// [OFF]", 8) == 0 || strncmp(trimmed, "//[OFF]", 7) == 0) {
-                char *name = trimmed + (trimmed[7] == ' ' ? 8 : 7);
-                trim_str(name);
-                for (int i = 0; i < in_cheats->count; ++i) {
-                    if (strcasecmp(in_cheats->items[i].name, name) == 0) {
-                        found_cheat = i;
-                        break;
-                    }
-                }
-            } else if (!is_cmt_str(trimmed) && !is_cheat_code(trimmed)) {
-                for (int i = 0; i < in_cheats->count; ++i) {
-                    if (strcasecmp(in_cheats->items[i].name, trimmed) == 0) {
-                        found_cheat = i;
-                        break;
-                    }
-                }
-            }
-
-            if (found_cheat >= 0) {
-                current_cheat_idx = found_cheat;
-                if (in_cheats->items[found_cheat].enabled) {
-                    out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", in_cheats->items[found_cheat].name);
-                } else {
-                    out_len += snprintf(out_buf + out_len, max_out_size - out_len, "// [OFF] %s\n", in_cheats->items[found_cheat].name);
-                }
-            } else if (current_cheat_idx >= 0) {
-                char clean_code[CHEAT_LINE_MAX + 1];
-                strncpy(clean_code, trimmed, CHEAT_LINE_MAX);
-                clean_code[CHEAT_LINE_MAX] = NUL;
-
-                char *code_ptr = clean_code;
-                if (strncmp(code_ptr, "//", 2) == 0) {
-                    code_ptr += 2;
-                    trim_str(code_ptr);
-                }
-
-                if (is_cheat_code(code_ptr)) {
+            int is_commented = 0;
+            char raw_code[CHEAT_LINE_MAX + 1];
+            if (is_raw_or_commented_code(trimmed, &is_commented, raw_code, sizeof(raw_code))) {
+                if (current_cheat_idx >= 0 && current_cheat_idx < in_cheats->count) {
                     if (in_cheats->items[current_cheat_idx].enabled) {
-                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", code_ptr);
+                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", raw_code);
                     } else {
-                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "// %s\n", code_ptr);
+                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "// %s\n", raw_code);
                     }
                 } else {
                     out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", line);
                 }
             } else {
-                out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", line);
+                char clean[MAX_CHEAT_NAME_LEN];
+                int is_off = 0;
+                clean_cheat_title(trimmed, clean, sizeof(clean), &is_off);
+
+                int matched_idx = -1;
+                if (has_alpha_or_digit(clean)) {
+                    for (int i = 0; i < in_cheats->count; ++i) {
+                        if (strcasecmp(in_cheats->items[i].name, clean) == 0) {
+                            matched_idx = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (matched_idx >= 0) {
+                    current_cheat_idx = matched_idx;
+                    if (in_cheats->items[matched_idx].is_mastercode) {
+                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", in_cheats->items[matched_idx].name);
+                    } else if (in_cheats->items[matched_idx].enabled) {
+                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "// %s\n", in_cheats->items[matched_idx].name);
+                    } else {
+                        out_len += snprintf(out_buf + out_len, max_out_size - out_len, "// [OFF] %s\n", in_cheats->items[matched_idx].name);
+                    }
+                } else {
+                    // Non-cheat comment or metadata (like //ELF CRC=...)
+                    out_len += snprintf(out_buf + out_len, max_out_size - out_len, "%s\n", line);
+                }
             }
         }
 

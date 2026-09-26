@@ -23,6 +23,9 @@ asm/
 *.a
 *.d
 DETAILED_CHANGELOG
+compile_output.log
+*.bin
+latest_extracted/
 
 #
 # files that we don't want to ignore
@@ -39,6 +42,9 @@ DETAILED_CHANGELOG
 !*/*/*/*.S
 !*/*/*/*/*.S
 !modules/debug/*.irx
+!prebuilt/
+!prebuilt/*
+
 
 #
 # Generated source files

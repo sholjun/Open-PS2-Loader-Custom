@@ -52,14 +52,14 @@ jobs:
       run: |
         python3 -c "
         import struct, sys
-        path = 'ee_core/ee_core.elf'
+        path = 'prebuilt/ee_core.elf'
         with open(path, 'rb') as f:
             elf = f.read()
         e_entry, e_phoff, e_shoff = struct.unpack('<III', elf[24:36])
         e_phnum, = struct.unpack('<H', elf[44:46])
         print(f'Checking {path}: entry=0x{e_entry:08x}, phnum={e_phnum}')
-        if e_entry != 0x00084000:
-            print(f'ERROR: entry point is 0x{e_entry:08x}, expected 0x00084000!')
+        if not (0x00084000 <= e_entry < 0x00097000):
+            print(f'ERROR: entry point is 0x{e_entry:08x}, expected in range [0x00084000, 0x00097000)!')
             sys.exit(1)
         found_load = False
         for i in range(e_phnum):

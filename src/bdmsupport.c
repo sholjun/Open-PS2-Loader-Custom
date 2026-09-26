@@ -441,8 +441,8 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
 
         // Get fragment list
         int iFragCount = fileXioIoctl2(fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
-        if (iFragCount > BDM_MAX_FRAGS) {
-            // Too many fragments
+        if (iFragCount <= 0 || iFragCount > BDM_MAX_FRAGS) {
+            // Error or too many fragments
             close(fd);
             sbUnprepare(&settings->common);
             guiMsgBox(_l(_STR_ERR_FRAGMENTED), 0, NULL);
@@ -455,6 +455,12 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
             EnablePS2Logo = CheckPS2Logo(fd, 0);
 
         close(fd);
+    }
+
+    if (iso_frag->frag_count == 0) {
+        sbUnprepare(&settings->common);
+        guiMsgBox(_l(_STR_ERR_FRAGMENTED), 0, NULL);
+        return;
     }
 
     // Initialize layer 1 information.
@@ -519,6 +525,8 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
     }
 
     LOG("bdm pre sysLaunchLoaderElf\n");
+    if (pDeviceData->massDeviceIndex < 0 || pDeviceData->massDeviceIndex >= 5)
+        pDeviceData->massDeviceIndex = 0;
     settings->bdDeviceId = pDeviceData->massDeviceIndex;
     if (!strcmp(pDeviceData->bdmDriver, "usb")) {
         settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_USBD;
@@ -786,8 +794,12 @@ int bdmUpdateDeviceData(item_list_t* pItemList)
             snprintf(pDeviceData->bdmPrefix, sizeof(pDeviceData->bdmPrefix), "mass%d:", pItemList->mode);
 
         // Get the name of the underlying device driver that backs the fat fs.
-        fileXioIoctl2(dir, USBMASS_IOCTL_GET_DRIVERNAME, NULL, 0, &pDeviceData->bdmDriver, sizeof(pDeviceData->bdmDriver) - 1);
-        fileXioIoctl2(dir, USBMASS_IOCTL_GET_DEVICE_NUMBER, NULL, 0, &pDeviceData->massDeviceIndex, sizeof(pDeviceData->massDeviceIndex));
+        if (fileXioIoctl2(dir, USBMASS_IOCTL_GET_DRIVERNAME, NULL, 0, &pDeviceData->bdmDriver, sizeof(pDeviceData->bdmDriver) - 1) < 0 || pDeviceData->bdmDriver[0] == '\0') {
+            strncpy(pDeviceData->bdmDriver, "usb", sizeof(pDeviceData->bdmDriver) - 1);
+        }
+        if (fileXioIoctl2(dir, USBMASS_IOCTL_GET_DEVICE_NUMBER, NULL, 0, &pDeviceData->massDeviceIndex, sizeof(pDeviceData->massDeviceIndex)) < 0) {
+            pDeviceData->massDeviceIndex = 0;
+        }
 
         pItemList->flags = 0;
 

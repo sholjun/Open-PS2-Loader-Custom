@@ -315,7 +315,10 @@ $(EE_ASM_DIR)imgdrv.s: $(PREBUILT_DIR)imgdrv.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)eesync.s: $(PREBUILT_DIR)eesync.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ eesync_irx
 
-$(EE_ASM_DIR)bdm_cdvdman.s: $(PREBUILT_DIR)bdm_cdvdman.irx | $(EE_ASM_DIR)
+modules/iopcore/cdvdman/bdm_cdvdman.irx: modules/iopcore/cdvdman
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_BDM=1 -C $< all
+
+$(EE_ASM_DIR)bdm_cdvdman.s: modules/iopcore/cdvdman/bdm_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdm_cdvdman_irx
 
 $(EE_ASM_DIR)bdm_ata_cdvdman.s: $(PREBUILT_DIR)bdm_ata_cdvdman.irx | $(EE_ASM_DIR)

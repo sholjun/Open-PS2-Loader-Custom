@@ -17,15 +17,12 @@
 *.o
 *.patch
 *.rej
-asm/
+*.s
 *.zip
 *.ZIP
 *.a
 *.d
 DETAILED_CHANGELOG
-compile_output.log
-*.bin
-latest_extracted/
 
 #
 # files that we don't want to ignore
@@ -36,15 +33,7 @@ latest_extracted/
 !.editorconfig
 !.clang-format
 !.clang-format-ignore
-!*.S
-!*/*.S
-!*/*/*.S
-!*/*/*/*.S
-!*/*/*/*/*.S
 !modules/debug/*.irx
-!prebuilt/
-!prebuilt/*
-
 
 #
 # Generated source files
@@ -55,4 +44,6 @@ IOPRP_img.c
 # language
 lng/lang_*.lng
 *lng_src
+src/lang_internal.c
+include/lang_autogen.h
 tmp/

@@ -41,9 +41,6 @@ printf '\n' >> /tmp/commit_summary
 old_number_commits=$(($(grep "rev" < OLD_DETAILED_CHANGELOG | head -1 | cut -d " " -f 1 | cut -c 4-)))
 number_commits=$(wc -l < /tmp/commit_summary)
 new_number_commits=$((number_commits - old_number_commits + 2))
-if [ "$new_number_commits" -le 0 ]; then
-  new_number_commits=1
-fi
 
 # Echo it!
 echo "Current Revision ${number_commits} (Of BitBucket r${old_number_commits} + Of GIT r${new_number_commits})"

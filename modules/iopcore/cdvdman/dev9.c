@@ -687,4 +687,3 @@ int Dev9RegisterPowerOffHandler(int idx, dev9_shutdown_cb_t cb)
 {
     return dev9RegisterShutdownCb(idx, cb);
 }
-

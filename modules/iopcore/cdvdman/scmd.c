@@ -40,60 +40,32 @@ int sceCdGetError(void)
 //-------------------------------------------------------------------------
 int sceCdTrayReq(int mode, u32 *traycnt)
 {
-    DPRINTF("sceCdTrayReq(%d, 0x08%X)\n", mode, traycnt);
+    DPRINTF("sceCdTrayReq(%d, 0x%lX)\n", mode, *traycnt);
 
     if (mode == SCECdTrayCheck) {
         if (traycnt)
             *traycnt = cdvdman_media_changed;
-
-        DPRINTF("sceCdTrayReq TrayCheck result=%d\n", cdvdman_media_changed);
-
-        if (cdvdman_media_changed) {
-            DelayThread(4000);
-        }
 
         cdvdman_media_changed = 0;
 
         return 1;
     }
 
-    // Bit 0 of cdvd status reg is Tray Open.
-    // Use it to determine if we are already closed or opened.
     if (mode == SCECdTrayOpen) {
-        // Tray is already opened, do nothing.
-        if (cdvdman_stat.status & 1) {
-            return 0;
-        }
-
         cdvdman_stat.status = SCECdStatShellOpen;
-        cdvdman_stat.disc_type_reg = SCECdNODISC;
+        cdvdman_stat.disc_type_reg = 0;
 
         DelayThread(11000);
 
-        // So that it reports disc change status.
-        cdvdman_media_changed = 1;
+        cdvdman_stat.err = SCECdErOPENS; /* not sure about this error code */
 
         return 1;
     } else if (mode == SCECdTrayClose) {
-        // Tray is closed, do nothing.
-        if (!(cdvdman_stat.status & 1)) {
-            return 0;
-        }
-
-        // First state is paused after close.
-        cdvdman_stat.status = SCECdStatPause;
-
         DelayThread(25000);
 
-        // If there is a disc(which for OPL always is) then it will start spinning after a while and detect disc type.
-
-        cdvdman_stat.status = SCECdStatSpin;
-
-        /*
-        If the day comes that OPL implements disc swapping, this will be place to reupdate all disc type, LBA start offsets, mediaLsn count and everything else.
-        Until then it will the same disc.
-        */
-        cdvdman_stat.disc_type_reg = cdvdman_settings.common.media;
+        cdvdman_stat.status = SCECdStatPause; /* not sure if the status is right, may be - SCECdStatSpin */
+        cdvdman_stat.err = SCECdErNO;         /* not sure if this error code is suitable here */
+        cdvdman_stat.disc_type_reg = (int)cdvdman_settings.common.media;
 
         cdvdman_media_changed = 1;
 

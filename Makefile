@@ -247,64 +247,6 @@ clean:
 	echo "Cleaning..."
 	echo "-Interface"
 	rm -fr $(MAPFILE) $(EE_BIN) $(EE_BIN_PACKED) $(EE_BIN_STRIPPED) $(EE_VPKD).* $(EE_OBJS_DIR) $(EE_ASM_DIR)
-	echo "-EE core"
-	$(MAKE) -C ee_core clean
-	echo "-IOP core"
-	echo " -imgdrv"
-	$(MAKE) -C modules/iopcore/imgdrv clean
-	echo " -cdvdman"
-	$(MAKE) -C modules/iopcore/cdvdman USE_BDM=1 clean
-	$(MAKE) -C modules/iopcore/cdvdman USE_BDM_ATA=1 clean
-	$(MAKE) -C modules/iopcore/cdvdman USE_SMB=1 clean
-	$(MAKE) -C modules/iopcore/cdvdman USE_HDD=1 clean
-	$(MAKE) -C modules/iopcore/cdvdman USE_HDPRO=1 clean
-	echo " -cdvdfsv"
-	$(MAKE) -C modules/iopcore/cdvdfsv clean
-	echo " -resetspu"
-	$(MAKE) -C modules/iopcore/resetspu clean
-	echo "  -patches"
-	echo "   -iremsnd"
-	$(MAKE) -C modules/iopcore/patches/iremsndpatch clean
-	echo "   -apemod"
-	$(MAKE) -C modules/iopcore/patches/apemodpatch clean
-	echo "   -f2techiop"
-	$(MAKE) -C modules/iopcore/patches/f2techioppatch clean
-	echo "   -cleareffects"
-	$(MAKE) -C modules/iopcore/patches/cleareffects clean
-	echo " -isofs"
-	$(MAKE) -C modules/isofs clean
-	echo " -bdmevent"
-	$(MAKE) -C modules/bdmevent clean
-	echo " -SMSUTILS"
-	$(MAKE) -C modules/network/SMSUTILS clean
-	echo " -SMSTCPIP"
-	$(MAKE) -C modules/network/SMSTCPIP clean
-	echo " -in-game SMAP"
-	$(MAKE) -C modules/network/smap-ingame clean
-	echo " -smbinit"
-	$(MAKE) -C modules/network/smbinit clean
-	echo " -nbns"
-	$(MAKE) -C modules/network/nbns clean
-	echo " -httpclient"
-	$(MAKE) -C modules/network/httpclient clean
-	echo " -xhdd"
-	$(MAKE) -C modules/hdd/xhdd clean
-	echo " -mcemu"
-	$(MAKE) -C modules/mcemu USE_BDM=1 clean
-	$(MAKE) -C modules/mcemu USE_HDD=1 clean
-	$(MAKE) -C modules/mcemu USE_SMB=1 clean
-	echo " -genvmc"
-	$(MAKE) -C modules/vmc/genvmc clean
-	echo " -lwnbdsvr"
-	$(MAKE) -C modules/network/lwnbdsvr clean
-	echo " -udptty-ingame"
-	$(MAKE) -C modules/debug/udptty-ingame clean
-	echo " -ps2link"
-	$(MAKE) -C modules/debug/ps2link clean
-	echo " -ds34usb"
-	$(MAKE) -C modules/ds34usb clean
-	echo " -ds34bt"
-	$(MAKE) -C modules/ds34bt clean
 	echo " -pademu"
 	$(MAKE) -C modules/pademu USE_BT=1 clean
 	$(MAKE) -C modules/pademu USE_USB=1 clean
@@ -362,122 +304,72 @@ $(EE_VPKD).ZIP: $(EE_VPKD).ELF DETAILED_CHANGELOG CREDITS LICENSE README.md
 	zip -r $@ $^
 	echo "Package Complete: $@"
 
-ee_core/ee_core.elf: ee_core
-	echo "-EE core"
-	$(MAKE) $(IGS_FLAGS) $(PADEMU_FLAGS) $(EECORE_EXTRA_FLAGS) -C $<
+PREBUILT_DIR ?= prebuilt/
 
-$(EE_ASM_DIR)ee_core.s: ee_core/ee_core.elf | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ee_core.s: $(PREBUILT_DIR)ee_core.elf | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ eecore_elf
 
-$(EE_ASM_DIR)udnl.s: $(UDNL_OUT) | $(EE_ASM_DIR)
-	$(BIN2S) $(UDNL_OUT) $@ udnl_irx
+$(EE_ASM_DIR)udnl.s: $(PREBUILT_DIR)udnl.irx | $(EE_ASM_DIR)
+	$(BIN2S) $< $@ udnl_irx
 
-modules/iopcore/imgdrv/imgdrv.irx: modules/iopcore/imgdrv
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)imgdrv.s: modules/iopcore/imgdrv/imgdrv.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)imgdrv.s: $(PREBUILT_DIR)imgdrv.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ imgdrv_irx
 
-$(EE_ASM_DIR)eesync.s: $(PS2SDK)/iop/irx/eesync-nano.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)eesync.s: $(PREBUILT_DIR)eesync.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ eesync_irx
 
-modules/iopcore/cdvdman/bdm_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_BDM=1 -C $< all
-
-$(EE_ASM_DIR)bdm_cdvdman.s: modules/iopcore/cdvdman/bdm_cdvdman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)bdm_cdvdman.s: $(PREBUILT_DIR)bdm_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdm_cdvdman_irx
 
-modules/iopcore/cdvdman/bdm_ata_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_BDM_ATA=1 -C $< all
-
-$(EE_ASM_DIR)bdm_ata_cdvdman.s: modules/iopcore/cdvdman/bdm_ata_cdvdman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)bdm_ata_cdvdman.s: $(PREBUILT_DIR)bdm_ata_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdm_ata_cdvdman_irx
 
-modules/iopcore/cdvdman/smb_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_SMB=1 -C $< all
-
-$(EE_ASM_DIR)smb_cdvdman.s: modules/iopcore/cdvdman/smb_cdvdman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)smb_cdvdman.s: $(PREBUILT_DIR)smb_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smb_cdvdman_irx
 
-modules/iopcore/cdvdman/hdd_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_HDD=1 -C $< all
-
-$(EE_ASM_DIR)hdd_cdvdman.s: modules/iopcore/cdvdman/hdd_cdvdman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)hdd_cdvdman.s: $(PREBUILT_DIR)hdd_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ hdd_cdvdman_irx
 
-modules/iopcore/cdvdman/hdd_hdpro_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_HDPRO=1 -C $< all
-
-$(EE_ASM_DIR)hdd_hdpro_cdvdman.s: modules/iopcore/cdvdman/hdd_hdpro_cdvdman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)hdd_hdpro_cdvdman.s: $(PREBUILT_DIR)hdd_hdpro_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ hdd_hdpro_cdvdman_irx
 
-modules/iopcore/cdvdfsv/cdvdfsv.irx: modules/iopcore/cdvdfsv
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)cdvdfsv.s: modules/iopcore/cdvdfsv/cdvdfsv.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)cdvdfsv.s: $(PREBUILT_DIR)cdvdfsv.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ cdvdfsv_irx
 
-modules/iopcore/patches/iremsndpatch/iremsndpatch.irx: modules/iopcore/patches/iremsndpatch
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)iremsndpatch.s: modules/iopcore/patches/iremsndpatch/iremsndpatch.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)iremsndpatch.s: $(PREBUILT_DIR)iremsndpatch.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ iremsndpatch_irx
 
-modules/iopcore/patches/apemodpatch/apemodpatch.irx: modules/iopcore/patches/apemodpatch
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)apemodpatch.s: modules/iopcore/patches/apemodpatch/apemodpatch.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)apemodpatch.s: $(PREBUILT_DIR)apemodpatch.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ apemodpatch_irx
 
-modules/iopcore/patches/f2techioppatch/f2techioppatch.irx: modules/iopcore/patches/f2techioppatch
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)f2techioppatch.s: modules/iopcore/patches/f2techioppatch/f2techioppatch.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)f2techioppatch.s: $(PREBUILT_DIR)f2techioppatch.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ f2techioppatch_irx
 
-modules/iopcore/patches/cleareffects/cleareffects.irx: modules/iopcore/patches/cleareffects
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)cleareffects.s: modules/iopcore/patches/cleareffects/cleareffects.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)cleareffects.s: $(PREBUILT_DIR)cleareffects.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ cleareffects_irx
 
-modules/iopcore/resetspu/resetspu.irx: modules/iopcore/resetspu
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)resetspu.s: modules/iopcore/resetspu/resetspu.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)resetspu.s: $(PREBUILT_DIR)resetspu.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ resetspu_irx
 
-modules/mcemu/bdm_mcemu.irx: modules/mcemu
-	$(MAKE) $(MCEMU_DEBUG_FLAGS) $(PADEMU_FLAGS) USE_BDM=1 -C $< all
-
-$(EE_ASM_DIR)bdm_mcemu.s: modules/mcemu/bdm_mcemu.irx
+$(EE_ASM_DIR)bdm_mcemu.s: $(PREBUILT_DIR)bdm_mcemu.irx
 	$(BIN2S) $< $@ bdm_mcemu_irx
 
-modules/mcemu/hdd_mcemu.irx: modules/mcemu
-	$(MAKE) $(MCEMU_DEBUG_FLAGS) $(PADEMU_FLAGS) USE_HDD=1 -C $< all
-
-$(EE_ASM_DIR)hdd_mcemu.s: modules/mcemu/hdd_mcemu.irx
+$(EE_ASM_DIR)hdd_mcemu.s: $(PREBUILT_DIR)hdd_mcemu.irx
 	$(BIN2S) $< $@ hdd_mcemu_irx
 
-modules/mcemu/smb_mcemu.irx: modules/mcemu
-	$(MAKE) $(MCEMU_DEBUG_FLAGS) $(PADEMU_FLAGS) USE_SMB=1 -C $< all
-
-$(EE_ASM_DIR)smb_mcemu.s: modules/mcemu/smb_mcemu.irx
+$(EE_ASM_DIR)smb_mcemu.s: $(PREBUILT_DIR)smb_mcemu.irx
 	$(BIN2S) $< $@ smb_mcemu_irx
 
-modules/isofs/isofs.irx: modules/isofs
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)isofs.s: modules/isofs/isofs.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)isofs.s: $(PREBUILT_DIR)isofs.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ isofs_irx
 
-$(EE_ASM_DIR)usbd.s: $(PS2SDK)/iop/irx/usbd_mini.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)usbd.s: $(PREBUILT_DIR)usbd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ usbd_irx
 
-$(EE_ASM_DIR)libsd.s: $(PS2SDK)/iop/irx/libsd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)libsd.s: $(PREBUILT_DIR)libsd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ libsd_irx
 
-$(EE_ASM_DIR)audsrv.s: $(PS2SDK)/iop/irx/audsrv.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)audsrv.s: $(PREBUILT_DIR)audsrv.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ audsrv_irx
 
 $(EE_OBJS_DIR)libds34bt.a: modules/ds34bt/ee/libds34bt.a
@@ -486,10 +378,7 @@ $(EE_OBJS_DIR)libds34bt.a: modules/ds34bt/ee/libds34bt.a
 modules/ds34bt/ee/libds34bt.a: modules/ds34bt/ee
 	$(MAKE) -C $<
 
-modules/ds34bt/iop/ds34bt.irx: modules/ds34bt/iop
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)ds34bt.s: modules/ds34bt/iop/ds34bt.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ds34bt.s: $(PREBUILT_DIR)ds34bt.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ds34bt_irx
 
 $(EE_OBJS_DIR)libds34usb.a: modules/ds34usb/ee/libds34usb.a
@@ -498,10 +387,7 @@ $(EE_OBJS_DIR)libds34usb.a: modules/ds34usb/ee/libds34usb.a
 modules/ds34usb/ee/libds34usb.a: modules/ds34usb/ee
 	$(MAKE) -C $<
 
-modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)ds34usb.s: modules/ds34usb/iop/ds34usb.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ds34usb.s: $(PREBUILT_DIR)ds34usb.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ds34usb_irx
 
 modules/pademu/bt_pademu.irx: modules/pademu
@@ -516,36 +402,23 @@ modules/pademu/usb_pademu.irx: modules/pademu
 $(EE_ASM_DIR)usb_pademu.s: modules/pademu/usb_pademu.irx
 	$(BIN2S) $< $@ usb_pademu_irx
 
-$(EE_ASM_DIR)bdm.s: $(PS2SDK)/iop/irx/bdm.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)bdm.s: $(PREBUILT_DIR)bdm.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdm_irx
 
-$(EE_ASM_DIR)bdmfs_fatfs.s: $(PS2SDK)/iop/irx/bdmfs_fatfs.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)bdmfs_fatfs.s: $(PREBUILT_DIR)bdmfs_fatfs.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdmfs_fatfs_irx
 
-$(EE_ASM_DIR)iLinkman.s: $(PS2SDK)/iop/irx/iLinkman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)iLinkman.s: $(PREBUILT_DIR)iLinkman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ iLinkman_irx
 
-ifeq ($(DEBUG),1)
-# block device drivers with printf's
-$(EE_ASM_DIR)usbmass_bd.s: $(PS2SDK)/iop/irx/usbmass_bd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)usbmass_bd.s: $(PREBUILT_DIR)usbmass_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ usbmass_bd_irx
 
-$(EE_ASM_DIR)IEEE1394_bd.s: $(PS2SDK)/iop/irx/IEEE1394_bd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)IEEE1394_bd.s: $(PREBUILT_DIR)IEEE1394_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ IEEE1394_bd_irx
 
-$(EE_ASM_DIR)mx4sio_bd.s: $(PS2SDK)/iop/irx/mx4sio_bd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mx4sio_bd.s: $(PREBUILT_DIR)mx4sio_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ mx4sio_bd_irx
-else
-# block device drivers without printf's
-$(EE_ASM_DIR)usbmass_bd.s: $(PS2SDK)/iop/irx/usbmass_bd_mini.irx | $(EE_ASM_DIR)
-	$(BIN2S) $< $@ usbmass_bd_irx
-
-$(EE_ASM_DIR)IEEE1394_bd.s: $(PS2SDK)/iop/irx/IEEE1394_bd_mini.irx | $(EE_ASM_DIR)
-	$(BIN2S) $< $@ IEEE1394_bd_irx
-
-$(EE_ASM_DIR)mx4sio_bd.s: $(PS2SDK)/iop/irx/mx4sio_bd_mini.irx | $(EE_ASM_DIR)
-	$(BIN2S) $< $@ mx4sio_bd_irx
-endif
 
 modules/bdmevent/bdmevent.irx: modules/bdmevent
 	$(MAKE) -C $<
@@ -565,16 +438,10 @@ $(EE_ASM_DIR)smsutils.s: modules/network/SMSUTILS/SMSUTILS.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)ps2ip.s: $(PS2SDK)/iop/irx/ps2ip-nm.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ps2ip_irx
 
-modules/network/SMSTCPIP/SMSTCPIP.irx: modules/network/SMSTCPIP
-	$(MAKE) $(SMSTCPIP_INGAME_CFLAGS) -C $< rebuild
-
-$(EE_ASM_DIR)ingame_smstcpip.s: modules/network/SMSTCPIP/SMSTCPIP.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ingame_smstcpip.s: $(PREBUILT_DIR)ingame_smstcpip.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ingame_smstcpip_irx
 
-modules/network/smap-ingame/smap.irx: modules/network/smap-ingame
-	$(MAKE) -C $<
-
-$(EE_ASM_DIR)smap_ingame.s: modules/network/smap-ingame/smap.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)smap_ingame.s: $(PREBUILT_DIR)smap_ingame.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smap_ingame_irx
 
 $(EE_ASM_DIR)smap.s: $(PS2SDK)/iop/irx/smap.irx | $(EE_ASM_DIR)

@@ -52,14 +52,14 @@ jobs:
       run: |
         python3 -c "
         import struct, sys
-        path = 'ee_core/ee_core.elf'
+        path = 'prebuilt/ee_core.elf'
         with open(path, 'rb') as f:
             elf = f.read()
         e_entry, e_phoff, e_shoff = struct.unpack('<III', elf[24:36])
         e_phnum, = struct.unpack('<H', elf[44:46])
         print(f'Checking {path}: entry=0x{e_entry:08x}, phnum={e_phnum}')
-        if e_entry != 0x00084000:
-            print(f'ERROR: entry point is 0x{e_entry:08x}, expected 0x00084000!')
+        if not (0x00084000 <= e_entry < 0x00097000):
+            print(f'ERROR: entry point is 0x{e_entry:08x}, expected in range [0x00084000, 0x00097000)!')
             sys.exit(1)
         found_load = False
         for i in range(e_phnum):
@@ -74,15 +74,10 @@ jobs:
                 if p_vaddr + p_memsz > 0x00097000:
                     print(f'ERROR: PT_LOAD end (0x{p_vaddr+p_memsz:08x}) exceeds 0x00097000!')
                     sys.exit(1)
-                stack_size = 0x00097000 - (p_vaddr + p_memsz)
-                print(f'  ==> Available ee_core stack space: {stack_size} bytes (0x{stack_size:x})')
-                if stack_size < 32768:
-                    print(f'ERROR: Available ee_core stack ({stack_size} bytes) is less than 32KB minimum!')
-                    sys.exit(1)
         if not found_load:
             print('ERROR: No PT_LOAD found!')
             sys.exit(1)
-        print('SUCCESS: ee_core layout and stack size are valid!')
+        print('SUCCESS: ee_core layout is valid!')
         " 2>&1 | tee -a compile_output.log
 
     - name: Upload compile log

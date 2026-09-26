@@ -520,7 +520,7 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
 
     LOG("bdm pre sysLaunchLoaderElf\n");
     settings->bdDeviceId = pDeviceData->massDeviceIndex;
-    if (!strcmp(pDeviceData->bdmDriver, "usb")) {
+    if (!strcmp(pDeviceData->bdmDriver, "usb") || pDeviceData->bdmDriver[0] == '\0') {
         settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_USBD;
         sysLaunchLoaderElf(filename, "BDM_USB_MODE", irx_size, irx, size_mcemu_irx, bdm_mcemu_irx, EnablePS2Logo, compatmask);
     } else if (!strcmp(pDeviceData->bdmDriver, "sd") && strlen(pDeviceData->bdmDriver) == 2) {
@@ -786,8 +786,12 @@ int bdmUpdateDeviceData(item_list_t* pItemList)
             snprintf(pDeviceData->bdmPrefix, sizeof(pDeviceData->bdmPrefix), "mass%d:", pItemList->mode);
 
         // Get the name of the underlying device driver that backs the fat fs.
-        fileXioIoctl2(dir, USBMASS_IOCTL_GET_DRIVERNAME, NULL, 0, &pDeviceData->bdmDriver, sizeof(pDeviceData->bdmDriver) - 1);
-        fileXioIoctl2(dir, USBMASS_IOCTL_GET_DEVICE_NUMBER, NULL, 0, &pDeviceData->massDeviceIndex, sizeof(pDeviceData->massDeviceIndex));
+        if (fileXioIoctl2(dir, USBMASS_IOCTL_GET_DRIVERNAME, NULL, 0, &pDeviceData->bdmDriver, sizeof(pDeviceData->bdmDriver) - 1) < 0 || pDeviceData->bdmDriver[0] == '\0') {
+            strncpy(pDeviceData->bdmDriver, "usb", sizeof(pDeviceData->bdmDriver) - 1);
+        }
+        if (fileXioIoctl2(dir, USBMASS_IOCTL_GET_DEVICE_NUMBER, NULL, 0, &pDeviceData->massDeviceIndex, sizeof(pDeviceData->massDeviceIndex)) < 0) {
+            pDeviceData->massDeviceIndex = 0;
+        }
 
         pItemList->flags = 0;
 

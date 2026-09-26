@@ -15,8 +15,21 @@
 
 #include <usbhdfsd-common.h>
 
+#include <ps2sdkapi.h>
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioIoctl, fileXioDevctl
+
+extern int ps2sdk_get_iop_fd(int fd) __attribute__((weak));
+
+static inline int get_iop_fd(int fd)
+{
+    if (ps2sdk_get_iop_fd) {
+        int iop_fd = ps2sdk_get_iop_fd(fd);
+        if (iop_fd >= 0)
+            return iop_fd;
+    }
+    return fd;
+}
 
 #define U64_2XU32(val)  ((u32*)val)[1], ((u32*)val)[0]
 
@@ -353,12 +366,13 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
                 fd = open(vmc_path, O_RDONLY);
                 if (fd >= 0)
                 {
+                    int iop_fd = get_iop_fd(fd);
                     // Get the absolute LBA of the VMC file and starting cluster number.
-                    if (fileXioIoctl2(fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &startingLBA, sizeof(startingLBA)) == 0 && 
-                        (startCluster = fileXioIoctl2(fd, USBMASS_IOCTL_GET_CLUSTER, NULL, 0, NULL, 0)) != 0)
+                    if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &startingLBA, sizeof(startingLBA)) == 0 && 
+                        (startCluster = fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_CLUSTER, NULL, 0, NULL, 0)) != 0)
                     {
                         // Check VMC cluster chain for fragmentation (write operation can cause damage to the filesystem).
-                        if (fileXioIoctl(fd, USBMASS_IOCTL_CHECK_CHAIN, "") == 1) {
+                        if (fileXioIoctl(iop_fd, USBMASS_IOCTL_CHECK_CHAIN, "") == 1) {
                             LOG("BDMSUPPORT Cluster Chain OK\n");
                             have_error = 0;
                             bdm_vmc_infos.active = 1;
@@ -439,8 +453,10 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
             return;
         }
 
+        int iop_fd = get_iop_fd(fd);
+
         // Get fragment list
-        int iFragCount = fileXioIoctl2(fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
+        int iFragCount = fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
         if (iFragCount > BDM_MAX_FRAGS) {
             // Too many fragments
             close(fd);
@@ -452,6 +468,22 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
         if (iFragCount > 0) {
             iso_frag->frag_count += iFragCount;
             iTotalFragCount += iFragCount;
+        } else {
+            // Robust fallback for single contiguous file if fraglist ioctl returns <= 0
+            u64 start_lba = 0;
+            if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &start_lba, sizeof(start_lba)) == 0 && start_lba > 0) {
+                iox_stat_t st;
+                u32 sector_count = 0;
+                if (fileXioGetStat(partname, &st) >= 0 && st.size > 0) {
+                    sector_count = (st.size + 2047) / 2048;
+                } else {
+                    sector_count = 0x200000;
+                }
+                settings->frags[iTotalFragCount].sector = start_lba;
+                settings->frags[iTotalFragCount].count = sector_count;
+                iso_frag->frag_count += 1;
+                iTotalFragCount += 1;
+            }
         }
 
         if ((gPS2Logo) && (i == 0))

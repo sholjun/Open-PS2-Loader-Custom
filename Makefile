@@ -357,16 +357,19 @@ $(EE_ASM_DIR)hdd_mcemu.s: $(PREBUILT_DIR)hdd_mcemu.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)smb_mcemu.s: $(PREBUILT_DIR)smb_mcemu.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smb_mcemu_irx
 
-$(EE_ASM_DIR)isofs.s: $(PREBUILT_DIR)isofs.irx | $(EE_ASM_DIR)
+modules/isofs/isofs.irx: modules/isofs
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)isofs.s: modules/isofs/isofs.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ isofs_irx
 
 $(EE_ASM_DIR)usbd.s: $(PREBUILT_DIR)usbd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ usbd_irx
 
-$(EE_ASM_DIR)libsd.s: $(PREBUILT_DIR)libsd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)libsd.s: $(PS2SDK)/iop/irx/libsd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ libsd_irx
 
-$(EE_ASM_DIR)audsrv.s: $(PREBUILT_DIR)audsrv.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)audsrv.s: $(PS2SDK)/iop/irx/audsrv.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ audsrv_irx
 
 $(EE_OBJS_DIR)libds34bt.a: modules/ds34bt/ee/libds34bt.a
@@ -375,7 +378,10 @@ $(EE_OBJS_DIR)libds34bt.a: modules/ds34bt/ee/libds34bt.a
 modules/ds34bt/ee/libds34bt.a: modules/ds34bt/ee
 	$(MAKE) -C $<
 
-$(EE_ASM_DIR)ds34bt.s: $(PREBUILT_DIR)ds34bt.irx | $(EE_ASM_DIR)
+modules/ds34bt/iop/ds34bt.irx: modules/ds34bt/iop
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)ds34bt.s: modules/ds34bt/iop/ds34bt.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ds34bt_irx
 
 $(EE_OBJS_DIR)libds34usb.a: modules/ds34usb/ee/libds34usb.a
@@ -384,7 +390,10 @@ $(EE_OBJS_DIR)libds34usb.a: modules/ds34usb/ee/libds34usb.a
 modules/ds34usb/ee/libds34usb.a: modules/ds34usb/ee
 	$(MAKE) -C $<
 
-$(EE_ASM_DIR)ds34usb.s: $(PREBUILT_DIR)ds34usb.irx | $(EE_ASM_DIR)
+modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)ds34usb.s: modules/ds34usb/iop/ds34usb.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ds34usb_irx
 
 $(EE_ASM_DIR)bt_pademu.s: $(PREBUILT_DIR)bt_pademu.irx | $(EE_ASM_DIR)
@@ -411,16 +420,22 @@ $(EE_ASM_DIR)IEEE1394_bd.s: $(PREBUILT_DIR)IEEE1394_bd.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)mx4sio_bd.s: $(PREBUILT_DIR)mx4sio_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ mx4sio_bd_irx
 
-$(EE_ASM_DIR)bdmevent.s: $(PREBUILT_DIR)bdmevent.irx | $(EE_ASM_DIR)
+modules/bdmevent/bdmevent.irx: modules/bdmevent
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)bdmevent.s: modules/bdmevent/bdmevent.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ bdmevent_irx
 
-$(EE_ASM_DIR)ps2dev9.s: $(PREBUILT_DIR)ps2dev9.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ps2dev9.s: $(PS2SDK)/iop/irx/ps2dev9.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ps2dev9_irx
 
-$(EE_ASM_DIR)smsutils.s: $(PREBUILT_DIR)smsutils.irx | $(EE_ASM_DIR)
+modules/network/SMSUTILS/SMSUTILS.irx: modules/network/SMSUTILS
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)smsutils.s: modules/network/SMSUTILS/SMSUTILS.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smsutils_irx
 
-$(EE_ASM_DIR)ps2ip.s: $(PREBUILT_DIR)ps2ip.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ps2ip.s: $(PS2SDK)/iop/irx/ps2ip-nm.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ps2ip_irx
 
 $(EE_ASM_DIR)ingame_smstcpip.s: $(PREBUILT_DIR)ingame_smstcpip.irx | $(EE_ASM_DIR)
@@ -429,43 +444,55 @@ $(EE_ASM_DIR)ingame_smstcpip.s: $(PREBUILT_DIR)ingame_smstcpip.irx | $(EE_ASM_DI
 $(EE_ASM_DIR)smap_ingame.s: $(PREBUILT_DIR)smap_ingame.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smap_ingame_irx
 
-$(EE_ASM_DIR)smap.s: $(PREBUILT_DIR)smap.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)smap.s: $(PS2SDK)/iop/irx/smap.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smap_irx
 
-$(EE_ASM_DIR)netman.s: $(PREBUILT_DIR)netman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)netman.s: $(PS2SDK)/iop/irx/netman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ netman_irx
 
-$(EE_ASM_DIR)ps2ips.s: $(PREBUILT_DIR)ps2ips.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ps2ips.s: $(PS2SDK)/iop/irx/ps2ips.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ps2ips_irx
 
-$(EE_ASM_DIR)smbman.s: $(PREBUILT_DIR)smbman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)smbman.s: $(PS2SDK)/iop/irx/smbman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smbman_irx
 
-$(EE_ASM_DIR)smbinit.s: $(PREBUILT_DIR)smbinit.irx | $(EE_ASM_DIR)
+modules/network/smbinit/smbinit.irx: modules/network/smbinit
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)smbinit.s: modules/network/smbinit/smbinit.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ smbinit_irx
 
-$(EE_ASM_DIR)ps2atad.s: $(PREBUILT_DIR)ps2atad.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ps2atad.s: $(PS2SDK)/iop/irx/ps2atad.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ps2atad_irx
 
-$(EE_ASM_DIR)hdpro_atad.s: $(PREBUILT_DIR)hdpro_atad.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)hdpro_atad.s: $(PS2SDK)/iop/irx/hdproatad.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ hdpro_atad_irx
 
-$(EE_ASM_DIR)poweroff.s: $(PREBUILT_DIR)poweroff.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)poweroff.s: $(PS2SDK)/iop/irx/poweroff.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ poweroff_irx
 
-$(EE_ASM_DIR)xhdd.s: $(PREBUILT_DIR)xhdd.irx | $(EE_ASM_DIR)
+modules/hdd/xhdd/xhdd.irx: modules/hdd/xhdd
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)xhdd.s: modules/hdd/xhdd/xhdd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ xhdd_irx
 
-$(EE_ASM_DIR)ps2hdd.s: $(PREBUILT_DIR)ps2hdd.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ps2hdd.s: $(PS2SDK)/iop/irx/ps2hdd-osd.irx
 	$(BIN2S) $< $@ ps2hdd_irx
 
-$(EE_ASM_DIR)ps2fs.s: $(PREBUILT_DIR)ps2fs.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)ps2fs.s: $(PS2SDK)/iop/irx/ps2fs-osd.irx
 	$(BIN2S) $< $@ ps2fs_irx
 
-$(EE_ASM_DIR)genvmc.s: $(PREBUILT_DIR)genvmc.irx | $(EE_ASM_DIR)
+modules/vmc/genvmc/genvmc.irx: modules/vmc/genvmc
+	$(MAKE) $(MOD_DEBUG_FLAGS) -C $<
+
+$(EE_ASM_DIR)genvmc.s: modules/vmc/genvmc/genvmc.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ genvmc_irx
 
-$(EE_ASM_DIR)lwnbdsvr.s: $(PREBUILT_DIR)lwnbdsvr.irx | $(EE_ASM_DIR)
+modules/network/lwnbdsvr/lwnbdsvr.irx: modules/network/lwnbdsvr
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)lwnbdsvr.s: modules/network/lwnbdsvr/lwnbdsvr.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ lwnbdsvr_irx
 
 $(EE_ASM_DIR)udptty.s: $(PS2SDK)/iop/irx/udptty.irx | $(EE_ASM_DIR)
@@ -477,31 +504,40 @@ $(EE_ASM_DIR)udptty-ingame.s: modules/debug/udptty-ingame/udptty.irx | $(EE_ASM_
 $(EE_ASM_DIR)ioptrap.s: $(PS2SDK)/iop/irx/ioptrap.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ioptrap_irx
 
+modules/debug/ps2link/ps2link.irx: modules/debug/ps2link
+	$(MAKE) -C $<
+
 $(EE_ASM_DIR)ps2link.s: modules/debug/ps2link/ps2link.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ ps2link_irx
 
-$(EE_ASM_DIR)nbns-iop.s: $(PREBUILT_DIR)nbns.irx | $(EE_ASM_DIR)
+modules/network/nbns/nbns.irx: modules/network/nbns
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)nbns-iop.s: modules/network/nbns/nbns.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ nbns_irx
 
-$(EE_ASM_DIR)httpclient-iop.s: $(PREBUILT_DIR)httpclient.irx | $(EE_ASM_DIR)
+modules/network/httpclient/httpclient.irx: modules/network/httpclient
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)httpclient-iop.s: modules/network/httpclient/httpclient.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ httpclient_irx
 
-$(EE_ASM_DIR)iomanx.s: $(PREBUILT_DIR)iomanx.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)iomanx.s: $(PS2SDK)/iop/irx/iomanX.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ iomanx_irx
 
-$(EE_ASM_DIR)filexio.s: $(PREBUILT_DIR)filexio.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)filexio.s: $(PS2SDK)/iop/irx/fileXio.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ filexio_irx
 
-$(EE_ASM_DIR)sio2man.s: $(PREBUILT_DIR)sio2man.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)sio2man.s: $(PS2SDK)/iop/irx/freesio2.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ sio2man_irx
 
-$(EE_ASM_DIR)padman.s: $(PREBUILT_DIR)padman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)padman.s: $(PS2SDK)/iop/irx/freepad.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ padman_irx
 
-$(EE_ASM_DIR)mcman.s: $(PREBUILT_DIR)mcman.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mcman.s: $(PS2SDK)/iop/irx/mcman.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ mcman_irx
 
-$(EE_ASM_DIR)mcserv.s: $(PREBUILT_DIR)mcserv.irx | $(EE_ASM_DIR)
+$(EE_ASM_DIR)mcserv.s: $(PS2SDK)/iop/irx/mcserv.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ mcserv_irx
 
 

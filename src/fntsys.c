@@ -342,9 +342,12 @@ void fntEnd()
 static atlas_t *fntNewAtlas()
 {
     atlas_t *atl = atlasNew(ATLAS_WIDTH, ATLAS_HEIGHT, GS_PSM_T8);
+    if (!atl)
+        return NULL;
 
     atl->surface.ClutPSM = GS_PSM_CT32;
     atl->surface.Clut = fontClut.Clut;
+    atl->surface.ClutStorageMode = GS_CLUT_STORAGE_CSM1;
 
     return atl;
 }

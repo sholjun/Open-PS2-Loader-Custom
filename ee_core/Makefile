@@ -17,8 +17,8 @@ GSMCORE_EE_OBJS = gsm_engine.o gsm_api.o dve_reg.o
 IGSCORE_EE_OBJS = igs_api.o
 CHEATCORE_EE_OBJS = cheat_engine.o cheat_api.o
 
-EE_OBJS = main.o syshook.o iopmgr.o modmgr.o util.o patches.o patches_asm.o \
-	  padhook.o cd_igr_rpc.o tlb.o asm.o crt0.o $(GSMCORE_EE_OBJS) $(CHEATCORE_EE_OBJS)
+EE_OBJS = crt0.o main.o syshook.o iopmgr.o modmgr.o util.o patches.o patches_asm.o \
+	  padhook.o cd_igr_rpc.o tlb.o asm.o $(GSMCORE_EE_OBJS) $(CHEATCORE_EE_OBJS)
 MAPFILE = ee_core.map
 
 EE_INCS := -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -I$(PS2SDK)/ports/include -Iinclude -I.
@@ -48,7 +48,7 @@ endif
 
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
-EE_LDFLAGS = -nostartfiles -nostdlib -Tlinkfile -L$(PS2SDK)/ee/lib -s -Wl,-Map,$(MAPFILE)
+EE_LDFLAGS = -nostartfiles -nostdlib -Tlinkfile -L$(PS2SDK)/ee/lib -s -Wl,-Map,$(MAPFILE) -Wl,-z,max-page-size=4096 -Wl,-z,common-page-size=4096 -Wl,-N
 EE_LIBS += -lpatches
 
 ifeq ($(PADEMU),1)

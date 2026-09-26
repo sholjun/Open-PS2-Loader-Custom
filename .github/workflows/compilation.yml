@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        apk add build-base git zip gawk bash
+        apk add build-base git zip gawk bash python3
 
     - name: git checkout
       uses: actions/checkout@v4
@@ -47,6 +47,38 @@ jobs:
         set -o pipefail
         make all 2>&1 | tee compile_output.log || (echo "=== COMPILE FAILURE LOG ==="; tail -n 80 compile_output.log; exit 1)
         ls -la *.elf *.ELF 2>/dev/null || true
+
+    - name: Verify ee_core ELF layout
+      run: |
+        python3 -c "
+        import struct, sys
+        path = 'ee_core/ee_core.elf'
+        with open(path, 'rb') as f:
+            elf = f.read()
+        e_entry, e_phoff, e_shoff = struct.unpack('<III', elf[24:36])
+        e_phnum, = struct.unpack('<H', elf[44:46])
+        print(f'Checking {path}: entry=0x{e_entry:08x}, phnum={e_phnum}')
+        if e_entry != 0x00084000:
+            print(f'ERROR: entry point is 0x{e_entry:08x}, expected 0x00084000!')
+            sys.exit(1)
+        found_load = False
+        for i in range(e_phnum):
+            ph = elf[e_phoff + i*32 : e_phoff + (i+1)*32]
+            p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = struct.unpack('<IIIIIIII', ph)
+            print(f'  PH {i}: type=0x{p_type:x}, vaddr=0x{p_vaddr:08x}, filesz=0x{p_filesz:x}, memsz=0x{p_memsz:x}, end=0x{p_vaddr+p_memsz:08x}')
+            if p_type == 1:
+                found_load = True
+                if p_vaddr != 0x00084000:
+                    print(f'ERROR: PT_LOAD vaddr is 0x{p_vaddr:08x}, expected 0x00084000!')
+                    sys.exit(1)
+                if p_vaddr + p_memsz > 0x00097000:
+                    print(f'ERROR: PT_LOAD end (0x{p_vaddr+p_memsz:08x}) exceeds 0x00097000!')
+                    sys.exit(1)
+        if not found_load:
+            print('ERROR: No PT_LOAD found!')
+            sys.exit(1)
+        print('SUCCESS: ee_core layout is valid!')
+        "
 
     - name: Upload compile log
       if: always()

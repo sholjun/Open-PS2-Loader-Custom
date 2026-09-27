@@ -179,14 +179,18 @@ void sysShutdownDev9(void)
 
 void sysReset(int modload_mask)
 {
+    static int sys_initialized = 0;
+    if (sys_initialized) {
 #ifdef PADEMU
-    ds34usb_reset();
-    ds34bt_reset();
+        ds34usb_reset();
+        ds34bt_reset();
 #endif
-    fileXioExit();
-    SifExitIopHeap();
-    SifLoadFileExit();
-    SifExitRpc();
+        fileXioExit();
+        SifExitIopHeap();
+        SifLoadFileExit();
+        SifExitRpc();
+    }
+    sys_initialized = 1;
 
     SifInitRpc(0);
 
@@ -219,11 +223,15 @@ void sysReset(int modload_mask)
     sbv_patch_enable_lmb();
     sbv_patch_disable_prefix_check();
 
-    ee_sema_t semaphore;
-    semaphore.init_count = 1;
-    semaphore.max_count = 1;
-    semaphore.option = 0;
-    sysLoadModuleLock = CreateSema(&semaphore);
+    static int sema_created = 0;
+    if (!sema_created) {
+        ee_sema_t semaphore;
+        semaphore.init_count = 1;
+        semaphore.max_count = 1;
+        semaphore.option = 0;
+        sysLoadModuleLock = CreateSema(&semaphore);
+        sema_created = 1;
+    }
 
     // clears modules list
     memset((void *)&g_sysLoadedModBuffer[0], 0, MAX_MODULES * 4);

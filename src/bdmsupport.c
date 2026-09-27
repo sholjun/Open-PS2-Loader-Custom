@@ -441,12 +441,6 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
 
         // Get fragment list
         int iFragCount = fileXioIoctl2(fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
-        if (iFragCount <= 0) {
-            close(fd);
-            sbUnprepare(&settings->common);
-            guiMsgBox("Error: Failed to get fragments for ISO file! Check USB format.", 0, NULL);
-            return;
-        }
         if (iFragCount > BDM_MAX_FRAGS) {
             // Too many fragments
             close(fd);
@@ -454,8 +448,26 @@ void bdmLaunchGame(item_list_t* pItemList, int id, config_set_t *configSet)
             guiMsgBox(_l(_STR_ERR_FRAGMENTED), 0, NULL);
             return;
         }
-        iso_frag->frag_count += iFragCount;
-        iTotalFragCount += iFragCount;
+        if (iFragCount > 0) {
+            iso_frag->frag_count += iFragCount;
+            iTotalFragCount += iFragCount;
+        } else {
+            // Fallback for contiguous files or UL parts if GET_FRAGLIST returns <= 0
+            u64 start_lba = 0;
+            if (fileXioIoctl2(fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &start_lba, sizeof(start_lba)) == 0 && start_lba > 0) {
+                iox_stat_t st;
+                u32 sector_count = 0;
+                if (fileXioGetStat(partname, &st) >= 0 && st.size > 0) {
+                    sector_count = (st.size + 2047) / 2048;
+                } else {
+                    sector_count = (game->format == GAME_FORMAT_USBLD) ? 0x80000 : 0x200000;
+                }
+                settings->frags[iTotalFragCount].sector = start_lba;
+                settings->frags[iTotalFragCount].count = sector_count;
+                iso_frag->frag_count += 1;
+                iTotalFragCount += 1;
+            }
+        }
 
         if ((gPS2Logo) && (i == 0))
             EnablePS2Logo = CheckPS2Logo(fd, 0);

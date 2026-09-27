@@ -1972,6 +1972,8 @@ int main(int argc, char *argv[])
     sysInitDECI2();
 #endif
 
+    SifInitRpc(0);
+
     LOG_INIT();
     PREINIT_LOG("OPL GUI start!\n");
 

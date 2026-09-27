@@ -183,9 +183,12 @@ static void _menuRequestConfig()
         if (itemConfigId == -1 || guiInactiveFrames >= list->delay) {
             itemConfigId = selected_item->item->current->item.id;
             ioPutRequest(IO_CUSTOM_SIMPLEACTION, &_menuLoadConfig);
+        } else {
+            actionStatus = 0;
         }
-    } else if (itemConfig)
+    } else {
         actionStatus = 0;
+    }
 
     SignalSema(menuSemaId);
 }

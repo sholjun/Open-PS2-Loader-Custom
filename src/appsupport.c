@@ -63,6 +63,9 @@ static float appGetELFSize(char *path)
     int fd, size;
     float bytesInMiB = 1048576.0f;
 
+    if (!path || path[0] == '\0')
+        return 0.0f;
+
     fd = open(path, O_RDONLY);
     if (fd < 0) {
         LOG("Failed to open APP %s\n", path);
@@ -71,6 +74,9 @@ static float appGetELFSize(char *path)
 
     size = getFileSize(fd);
     close(fd);
+
+    if (size <= 0)
+        return 0.0f;
 
     // Return size in MiB
     return (size / bytesInMiB);

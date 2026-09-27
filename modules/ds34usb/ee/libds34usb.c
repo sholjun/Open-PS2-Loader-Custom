@@ -21,6 +21,7 @@ static u8 ds34usb_inited = 0;
 
 int ds34usb_init()
 {
+    int retry = 500;
     ds34usb.server = NULL;
 
     do {
@@ -28,7 +29,10 @@ int ds34usb_init()
             return 0;
 
         nopdelay();
-    } while (!ds34usb.server);
+    } while (!ds34usb.server && --retry > 0);
+
+    if (!ds34usb.server)
+        return 0;
 
     ds34usb_inited = 1;
 

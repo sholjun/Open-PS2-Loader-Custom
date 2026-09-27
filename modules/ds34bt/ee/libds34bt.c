@@ -24,6 +24,7 @@ static u8 ds34bt_inited = 0;
 
 int ds34bt_init()
 {
+    int retry = 500;
     ds34bt.server = NULL;
 
     do {
@@ -31,7 +32,10 @@ int ds34bt_init()
             return 0;
 
         nopdelay();
-    } while (!ds34bt.server);
+    } while (!ds34bt.server && --retry > 0);
+
+    if (!ds34bt.server)
+        return 0;
 
     ds34bt_inited = 1;
 
